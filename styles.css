@@ -1,0 +1,27 @@
+.table {
+    margin-top: 20px;
+}
+
+.table th {
+    background-color: #138808;
+    color: white;
+}
+
+#chart {
+    height: 500px;
+    width: 100%;
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+}
+
+@media (max-width: 768px) {
+    #chart {
+        height: 300px;
+    }
+    
+    .form-control, .form-select {
+        margin-bottom: 10px;
+    }
+}

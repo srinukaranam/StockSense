@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockSense - AI Stock Prediction App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        /* Make sure Plotly graphs are centered */
+        .js-plotly-plot {
+            margin: 0 auto !important;
+        }
+        
+        /* Fix for SVG centering within container */
+        .plot-container.plotly {
+            width: 100% !important;
+        }
+        
+        /* Ensure the graph container uses the full width */
+        #stockGraph, #fullscreenGraph {
+            width: 100% !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="{{ url_for('dashboard') }}" class="text-2xl font-bold text-blue-600">
+                            <i class="fas fa-chart-line mr-2"></i>StockSense
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="mr-4">
+                        <span class="text-gray-700">Welcome, {{ session['username'] }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Error Messages -->
+        {% if error %}
+        <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Stock Selection Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Stock Prediction</h2>
+            
+            <form id="prediction-form" action="{{ url_for('predict') }}" method="post">
+                <!-- Stock Selection Interface -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label for="ticker" class="block text-sm font-medium text-gray-700">Stock Symbol</label>
+                        <div class="mt-1 relative">
+                            <input type="text" id="ticker" name="ticker" value="{{ ticker|default('') }}" required
+                                  placeholder="e.g., AAPL, MSFT, GOOGL"
+                                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stock Selection Section -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quick Stock Selection</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Indian Stocks -->
+                            <div class="relative">
+                                <button type="button" id="indianStocksBtn" class="inline-flex justify-between items-center w-full px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <span>Indian Stocks</span>
+                                    <i class="fas fa-chevron-down ml-2"></i>
+                                </button>
+                                <div id="indianStocksDropdown" class="hidden absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-y-auto">
+                                    <div class="py-1">
+                                        {% if default_stocks and default_stocks['Indian Stocks'] %}
+                                            {% for symbol, name in default_stocks['Indian Stocks'].items() %}
+                                                <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="{{ symbol }}">{{ name }} ({{ symbol }})</a>
+                                            {% endfor %}
+                                        {% else %}
+                                            <!-- Fallback Indian stocks -->
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="RELIANCE.NS">Reliance Industries (RELIANCE.NS)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="TCS.NS">Tata Consultancy Services (TCS.NS)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="INFY.NS">Infosys (INFY.NS)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="HDFCBANK.NS">HDFC Bank (HDFCBANK.NS)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="WIPRO.NS">Wipro (WIPRO.NS)</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- US Stocks -->
+                            <div class="relative">
+                                <button type="button" id="usStocksBtn" class="inline-flex justify-between items-center w-full px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <span>US Stocks</span>
+                                    <i class="fas fa-chevron-down ml-2"></i>
+                                </button>
+                                <div id="usStocksDropdown" class="hidden absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-y-auto">
+                                    <div class="py-1">
+                                        {% if default_stocks and default_stocks['US Stocks'] %}
+                                            {% for symbol, name in default_stocks['US Stocks'].items() %}
+                                                <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="{{ symbol }}">{{ name }} ({{ symbol }})</a>
+                                            {% endfor %}
+                                        {% else %}
+                                            <!-- Fallback US stocks -->
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="AAPL">Apple Inc. (AAPL)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="MSFT">Microsoft Corp. (MSFT)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="GOOGL">Alphabet Inc. (GOOGL)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="AMZN">Amazon.com Inc. (AMZN)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="META">Meta Platforms Inc. (META)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="TSLA">Tesla Inc. (TSLA)</a>
+                                            <a href="#" class="stock-button block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-ticker="NVDA">NVIDIA Corp. (NVDA)</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Date Range Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label for="period" class="block text-sm font-medium text-gray-700">Historical Data Period</label>
+                        <select id="period" name="period" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="1y">1 Year</option>
+                            <option value="2y">2 Years</option>
+                            <option value="5y">5 Years</option>
+                            <option value="10y">10 Years</option>
+                            <option value="max">Max</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700">Prediction Start Date</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ current_date|default('') }}" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700">Prediction End Date</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ current_end_date|default('') }}" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-chart-line mr-2"></i> Generate Predictions
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Prediction Results -->
+        {% if predictions %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">{{ company.get('longName', ticker|default('Stock')) }} Predictions</h2>
+            
+            <!-- Enhanced Graph Selection UI -->
+            <div class="mt-6">
+                <!-- Improved graph selection UI - card-based approach -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-4">Select Visualization</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="graph-option cursor-pointer border rounded-lg p-4 hover:shadow-md transition bg-white hover:bg-blue-50 active-graph" data-type="price">
+                            <div class="text-center">
+                                <div class="bg-blue-100 text-blue-600 rounded-full p-3 mx-auto mb-3 w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-2xl"></i>
+                                </div>
+                                <h4 class="font-medium">Price Chart</h4>
+                                <p class="text-xs text-gray-500 mt-1">Open/Close price comparison</p>
+                            </div>
+                        </div>
+                        <div class="graph-option cursor-pointer border rounded-lg p-4 hover:shadow-md transition bg-white hover:bg-green-50" data-type="movingAvg">
+                            <div class="text-center">
+                                <div class="bg-green-100 text-green-600 rounded-full p-3 mx-auto mb-3 w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-chart-area text-2xl"></i>
+                                </div>
+                                <h4 class="font-medium">Moving Averages</h4>
+                                <p class="text-xs text-gray-500 mt-1">Technical analysis indicators</p>
+                            </div>
+                        </div>
+                        <div class="graph-option cursor-pointer border rounded-lg p-4 hover:shadow-md transition bg-white hover:bg-orange-50" data-type="candlestick">
+                            <div class="text-center">
+                                <div class="bg-orange-100 text-orange-600 rounded-full p-3 mx-auto mb-3 w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-fire text-2xl"></i>
+                                </div>
+                                <h4 class="font-medium">Candlestick</h4>
+                                <p class="text-xs text-gray-500 mt-1">OHLC price visualization</p>
+                            </div>
+                        </div>
+                        <div class="graph-option cursor-pointer border rounded-lg p-4 hover:shadow-md transition bg-white hover:bg-purple-50" data-type="volume">
+                            <div class="text-center">
+                                <div class="bg-purple-100 text-purple-600 rounded-full p-3 mx-auto mb-3 w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-city text-2xl"></i>
+                                </div>
+                                <h4 class="font-medium">Volume Analysis</h4>
+                                <p class="text-xs text-gray-500 mt-1">Price and volume relationship</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Graph Container with improved styling -->
+                <div class="relative">
+                    <div class="absolute top-2 right-2 z-10">
+                        <div class="inline-flex rounded-md shadow-sm">
+                            <button id="downloadGraphBtn" class="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-l-md hover:bg-gray-50">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button id="fullscreenGraphBtn" class="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-r-md hover:bg-gray-50">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="graphLegend" class="py-2 px-4 bg-gray-50 rounded-t-lg border-t border-l border-r">
+                        <div class="flex flex-wrap items-center text-sm">
+                            <!-- Legend will be dynamically populated -->
+                        </div>
+                    </div>
+                    <div id="stockGraph" class="w-full h-96 border rounded-b-lg flex justify-center items-center bg-white">
+                        <div class="text-center text-gray-500">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                            <p>Loading stock data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Company Info -->
+            {% if company %}
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-lg font-medium mb-2">Company Information</h3>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <p class="mb-2"><span class="font-semibold">Name:</span> {{ company.get('name', 'N/A') }}</p>
+                        <p class="mb-2"><span class="font-semibold">Sector:</span> {{ company.get('sector', 'N/A') }}</p>
+                        <p class="mb-2"><span class="font-semibold">Industry:</span> {{ company.get('industry', 'N/A') }}</p>
+                        <p class="mb-2"><span class="font-semibold">Country:</span> {{ company.get('country', 'N/A') }}</p>
+                        <p class="mb-2"><span class="font-semibold">Exchange:</span> {{ company.get('exchange', 'N/A') }}</p>
+                        <p class="mb-2"><span class="font-semibold">Employees:</span> {{ company.get('employees')|format_number if company.get('employees') else 'N/A' }}</p>
+                        <p><span class="font-semibold">Currency:</span> {{ company.get('currency', 'N/A') }} ({{ company.get('currencySymbol', '') }})</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium mb-2">Financial Metrics</h3>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <p class="mb-2"><span class="font-semibold">Market Cap:</span> {{ company.get('currencySymbol', '$') }}{{ company.get('marketCap')|format_number if company.get('marketCap') else 'N/A' }}</p>
+                        <p class="mb-2"><span class="font-semibold">Current Price:</span> {{ company.get('currencySymbol', '$') }}{{ "%.2f"|format(company.get('currentPrice', 0)) if company.get('currentPrice') else 'N/A' }}</p>
+                        <p class="mb-2"><span class="font-semibold">52 Week High:</span> {{ company.get('currencySymbol', '$') }}{{ "%.2f"|format(company.get('52WeekHigh', 0)) if company.get('52WeekHigh') else 'N/A' }}</p>
+                        <p class="mb-2"><span class="font-semibold">52 Week Low:</span> {{ company.get('currencySymbol', '$') }}{{ "%.2f"|format(company.get('52WeekLow', 0)) if company.get('52WeekLow') else 'N/A' }}</p>
+                        <p class="mb-2"><span class="font-semibold">P/E Ratio:</span> {{ "%.2f"|format(company.get('peRatio', 0)) if company.get('peRatio') else 'N/A' }}</p>
+                        <p><span class="font-semibold">Dividend Yield:</span> {{ "%.2f"|format(company.get('dividendYield', 0) * 100) if company.get('dividendYield') else 'N/A' }}%</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Prediction Table -->
+            <div class="mt-6">
+                <h3 class="text-lg font-medium mb-2">Detailed Predictions</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Open</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Close</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">change</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for pred in predictions %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ pred.date | datetimeformat }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{{ currency_symbol|default('$') }}{{ "%.2f"|format(pred.open) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{{ currency_symbol|default('$') }}{{ "%.2f"|format(pred.close) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if pred.close > pred.open %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {% if pred.close > pred.open %}
+                                    +{{ "%.2f"|format((pred.close - pred.open) / pred.open * 100) }}%
+                                    {% else %}
+                                    {{ "%.2f"|format((pred.close - pred.open) / pred.open * 100) }}%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+        
+    <!-- Footer -->
+    <footer class="bg-white py-4 border-t">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-500 text-sm">
+                © 2025 StockSense. All rights reserved. The predictions are for educational purposes only.
+            </p>
+        </div>
+    </footer>
+    
+    <!-- Modal for fullscreen graph -->
+    <div id="fullscreenModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg w-11/12 max-w-6xl h-5/6 relative">
+            <button id="closeFullscreenBtn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="p-4 h-full">
+                <div id="fullscreenGraph" class="w-full h-5/6"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Improved Stock Dropdowns
+    const indianStocksBtn = document.getElementById('indianStocksBtn');
+    const usStocksBtn = document.getElementById('usStocksBtn');
+    const indianStocksDropdown = document.getElementById('indianStocksDropdown');
+    const usStocksDropdown = document.getElementById('usStocksDropdown');
+    
+    // Toggle Indian stocks dropdown
+    if (indianStocksBtn && indianStocksDropdown) {
+        indianStocksBtn.addEventListener('click', function() {
+            indianStocksDropdown.classList.toggle('hidden');
+            // Close other dropdown
+            if (usStocksDropdown) usStocksDropdown.classList.add('hidden');
+        });
+    }
+    
+    // Toggle US stocks dropdown
+    if (usStocksBtn && usStocksDropdown) {
+        usStocksBtn.addEventListener('click', function() {
+            usStocksDropdown.classList.toggle('hidden');
+            // Close other dropdown
+            if (indianStocksDropdown) indianStocksDropdown.classList.add('hidden');
+        });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('#indianStocksBtn') && !event.target.closest('#indianStocksDropdown')) {
+            if (indianStocksDropdown) indianStocksDropdown.classList.add('hidden');
+        }
+        
+        if (!event.target.closest('#usStocksBtn') && !event.target.closest('#usStocksDropdown')) {
+            if (usStocksDropdown) usStocksDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Handle quick stock selection
+    const stockButtons = document.querySelectorAll('.stock-button');
+    const tickerInput = document.getElementById('ticker');
+    
+    if (stockButtons && tickerInput) {
+        stockButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const ticker = this.getAttribute('data-ticker');
+                if (ticker) {
+                    tickerInput.value = ticker;
+                    // Close dropdowns
+                    if (indianStocksDropdown) indianStocksDropdown.classList.add('hidden');
+                    if (usStocksDropdown) usStocksDropdown.classList.add('hidden');
+                    
+                    // Focus the ticker input to show the user their selection
+                    tickerInput.focus();
+                }
+            });
+        });
+    }
+    
+    // Set default dates if not already set
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput && !startDateInput.value) {
+        const today = new Date();
+        startDateInput.value = today.toISOString().split('T')[0];
+    }
+    
+    if (endDateInput && !endDateInput.value) {
+        const today = new Date();
+        const oneMonthLater = new Date(today);
+        oneMonthLater.setMonth(today.getMonth() + 1);
+        endDateInput.value = oneMonthLater.toISOString().split('T')[0];
+    }
+    
+    // Improved Graph Options
+    const graphOptions = document.querySelectorAll('.graph-option');
+    const stockGraph = document.getElementById('stockGraph');
+    const graphLegend = document.getElementById('graphLegend');
+    let currentGraphType = 'price';
+    let currentData = null;
+    let currentPlot = null;
+    
+    // Initialize download and fullscreen buttons
+    const downloadGraphBtn = document.getElementById('downloadGraphBtn');
+    const fullscreenGraphBtn = document.getElementById('fullscreenGraphBtn');
+    const fullscreenModal = document.getElementById('fullscreenModal');
+    const fullscreenGraph = document.getElementById('fullscreenGraph');
+    const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
+    
+    // Handle graph options selection
+    if (graphOptions && stockGraph) {
+        graphOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Update UI to show which option is selected
+                graphOptions.forEach(opt => {
+                    opt.classList.remove('active-graph', 'border-blue-500', 'shadow-md');
+                    opt.classList.add('bg-white');
+                });
+                
+                this.classList.add('active-graph', 'border-blue-500', 'shadow-md');
+                this.classList.remove('bg-white');
+                this.classList.add('bg-blue-50');
+                
+                const graphType = this.getAttribute('data-type');
+                currentGraphType = graphType;
+                
+                const ticker = document.getElementById('ticker').value;
+                
+                if (!ticker) {
+                    stockGraph.innerHTML = 
+                        '<div class="flex flex-col justify-center items-center h-full text-red-500">' +
+                        '<i class="fas fa-exclamation-circle text-4xl mb-2"></i>' +
+                        '<p>Please select a stock first</p></div>';
+                    return;
+                }
+                
+                // Show loading spinner
+                stockGraph.innerHTML = 
+                    '<div class="flex flex-col justify-center items-center h-full text-blue-500">' +
+                    '<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>' +
+                    '<p>Loading graph data...</p></div>';
+                
+                // Generate and render graph
+                generateStockData(ticker).then(data => {
+                    currentData = data;
+                    renderEnhancedGraph(data, graphType, ticker);
+                });
+            });
+        });
+    }
+    
+    // Handle download button
+    if (downloadGraphBtn) {
+        downloadGraphBtn.addEventListener('click', function() {
+            if (currentPlot) {
+                Plotly.downloadImage(currentPlot, {
+                    format: 'png',
+                    filename: `${document.getElementById('ticker').value}_${currentGraphType}_chart`,
+                    height: 800,
+                    width: 1200,
+                    scale: 2
+                });
+            }
+        });
+    }// Handle fullscreen button
+    if (fullscreenGraphBtn && fullscreenModal && fullscreenGraph && closeFullscreenBtn) {
+        fullscreenGraphBtn.addEventListener('click', function() {
+            if (currentData && currentGraphType) {
+                fullscreenModal.classList.remove('hidden');
+                // Render the same graph in fullscreen
+                renderEnhancedGraph(currentData, currentGraphType, document.getElementById('ticker').value, fullscreenGraph);
+            }
+        });
+        
+        closeFullscreenBtn.addEventListener('click', function() {
+            fullscreenModal.classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        fullscreenModal.addEventListener('click', function(event) {
+            if (event.target === fullscreenModal) {
+                fullscreenModal.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Function to generate stock data - in real app this would fetch from backend
+    async function generateStockData(ticker) {
+        // For demo purposes, we'll generate some random data
+        // In a real app, this would fetch from your backend API
+        
+        const today = new Date();
+        const dates = [];
+        const openPrices = [];
+        const closePrices = [];
+        const highPrices = [];
+        const lowPrices = [];
+        const volumes = [];
+        
+        // Generate 100 days of historical data
+        let basePrice = Math.random() * 500 + 50; // Random starting price between 50 and 550
+        
+        for (let i = 100; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(today.getDate() - i);
+            dates.push(date);
+            
+            // Generate realistic price movements
+            const dailyVolatility = Math.random() * 0.04 - 0.02; // -2% to +2%
+            const dailyTrend = Math.random() * 0.01 - 0.002; // Slight upward bias
+            
+            const open = basePrice * (1 + dailyVolatility);
+            openPrices.push(open);
+            
+            const high = open * (1 + Math.random() * 0.02);
+            highPrices.push(high);
+            
+            const low = open * (1 - Math.random() * 0.02);
+            lowPrices.push(low);
+            
+            const close = open * (1 + dailyVolatility + dailyTrend);
+            closePrices.push(close);
+            
+            basePrice = close; // Next day starts from previous close
+            
+            // Generate volume data
+            const volume = Math.floor(Math.random() * 10000000) + 500000;
+            volumes.push(volume);
+        }
+        
+        // Generate predicted data (future dates)
+        const predictedDates = [];
+        const predictedOpens = [];
+        const predictedCloses = [];
+        
+        const startDate = new Date(document.getElementById('start_date').value);
+        const endDate = new Date(document.getElementById('end_date').value);
+        
+        // Calculate number of days between start and end dates
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        for (let i = 0; i <= diffDays; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            predictedDates.push(date);
+            
+            // Generate predicted prices with some randomness but following a trend
+            const daysSinceStart = i;
+            const trendFactor = 1 + (Math.random() * 0.005 * daysSinceStart);
+            
+            const predictedOpen = basePrice * trendFactor * (1 + (Math.random() * 0.04 - 0.02));
+            predictedOpens.push(predictedOpen);
+            
+            const predictedClose = predictedOpen * (1 + (Math.random() * 0.03 - 0.01));
+            predictedCloses.push(predictedClose);
+            
+            basePrice = predictedClose; // Continue the trend
+        }
+        
+        return {
+            historical: {
+                dates: dates,
+                open: openPrices,
+                close: closePrices,
+                high: highPrices,
+                low: lowPrices,
+                volume: volumes
+            },
+            predicted: {
+                dates: predictedDates,
+                open: predictedOpens,
+                close: predictedCloses
+            }
+        };
+    }
+    
+    function renderEnhancedGraph(data, graphType, ticker, targetElement = stockGraph) {
+    // Clear any existing graph
+    if (targetElement) {
+        targetElement.innerHTML = '';
+    }
+    
+    // Update legend based on graph type
+    updateGraphLegend(graphType);
+    
+    // Extract data
+    const historicalDates = data.historical.dates;
+    const historicalOpen = data.historical.open;
+    const historicalClose = data.historical.close;
+    const historicalHigh = data.historical.high;
+    const historicalLow = data.historical.low;
+    const historicalVolume = data.historical.volume;
+    
+    const predictedDates = data.predicted.dates;
+    const predictedOpen = data.predicted.open;
+    const predictedClose = data.predicted.close;
+    
+    // Format dates for display
+    const formattedHistoricalDates = historicalDates.map(date => date.toISOString().split('T')[0]);
+    const formattedPredictedDates = predictedDates.map(date => date.toISOString().split('T')[0]);
+    
+    // Determine graph layout based on type
+    let traces = [];
+    let layout = {
+        title: `${ticker} Stock Analysis`,
+        height: targetElement === fullscreenGraph ? 700 : 400,
+        width: targetElement === fullscreenGraph ? targetElement.offsetWidth : targetElement.offsetWidth,
+        autosize: true,
+        legend: { orientation: 'h', y: -0.2 },
+        margin: { l: 50, r: 50, b: 50, t: 50, pad: 4 },
+        hovermode: 'closest'
+    };
+        
+        // Set up traces based on graph type
+        switch(graphType) {
+            case 'price':
+                // Historical price data
+                traces.push({
+                    x: formattedHistoricalDates,
+                    y: historicalClose,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Historical Close',
+                    line: { color: '#1d4ed8' }
+                });
+                
+                traces.push({
+                    x: formattedHistoricalDates,
+                    y: historicalOpen,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Historical Open',
+                    line: { color: '#3b82f6', dash: 'dot' }
+                });
+                
+                // Predicted price data
+                traces.push({
+                    x: formattedPredictedDates,
+                    y: predictedClose,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Predicted Close',
+                    line: { color: '#f97316' }
+                });
+                
+                traces.push({
+                    x: formattedPredictedDates,
+                    y: predictedOpen,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Predicted Open',
+                    line: { color: '#fb923c', dash: 'dot' }
+                });
+                
+                // Add vertical line separating historical and predicted data
+                const separationDate = formattedHistoricalDates[formattedHistoricalDates.length - 1];
+                
+                layout.shapes = [{
+                    type: 'line',
+                    x0: separationDate,
+                    y0: 0,
+                    x1: separationDate,
+                    y1: 1,
+                    yref: 'paper',
+                    line: {
+                        color: 'rgb(55, 65, 81)',
+                        width: 1,
+                        dash: 'dash'
+                    }
+                }];
+                
+                layout.annotations = [{
+                    x: separationDate,
+                    y: 1,
+                    yref: 'paper',
+                    text: 'Prediction Start',
+                    showarrow: true,
+                    arrowhead: 1,
+                    ax: 0,
+                    ay: -40
+                }];
+                
+                break;
+                
+            case 'movingAvg':
+                // Calculate moving averages
+                const ma10 = calculateMovingAverage(historicalClose, 10);
+                const ma20 = calculateMovingAverage(historicalClose, 20);
+                const ma50 = calculateMovingAverage(historicalClose, 50);
+                
+                // Historical price
+                traces.push({
+                    x: formattedHistoricalDates,
+                    y: historicalClose,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Close Price',
+                    line: { color: '#6b7280', width: 1 }
+                });
+                
+                // Moving averages
+                traces.push({
+                    x: formattedHistoricalDates.slice(9),
+                    y: ma10,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: '10-Day MA',
+                    line: { color: '#2563eb', width: 2 }
+                });
+                
+                traces.push({
+                    x: formattedHistoricalDates.slice(19),
+                    y: ma20,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: '20-Day MA',
+                    line: { color: '#059669', width: 2 }
+                });
+                
+                traces.push({
+                    x: formattedHistoricalDates.slice(49),
+                    y: ma50,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: '50-Day MA',
+                    line: { color: '#d97706', width: 2 }
+                });
+                
+                break;
+                
+            case 'candlestick':
+                // Create candlestick chart
+                traces.push({
+                    x: formattedHistoricalDates,
+                    open: historicalOpen,
+                    high: historicalHigh,
+                    low: historicalLow,
+                    close: historicalClose,
+                    type: 'candlestick',
+                    name: 'Price',
+                    increasing: {line: {color: '#10b981'}},
+                    decreasing: {line: {color: '#ef4444'}}
+                });
+                
+                // Add predicted points as scatter
+                traces.push({
+                    x: formattedPredictedDates,
+                    y: predictedClose,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Predicted',
+                    line: {color: '#f97316'}
+                });
+                
+                layout.xaxis = {
+                    rangeslider: {
+                        visible: false
+                    }
+                };
+                
+                break;
+                
+            case 'volume':
+                // Create volume graph
+                const volumeTrace = {
+                    x: formattedHistoricalDates,
+                    y: historicalVolume,
+                    type: 'bar',
+                    name: 'Volume',
+                    marker: {
+                        color: historicalVolume.map((v, i) => 
+                            historicalClose[i] >= historicalOpen[i] ? '#10b981' : '#ef4444')
+                    },
+                    yaxis: 'y2',
+                    opacity: 0.7
+                };
+                
+                const priceTrace = {
+                    x: formattedHistoricalDates,
+                    y: historicalClose,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Close Price',
+                    line: { color: '#2563eb' }
+                };
+                
+                traces = [priceTrace, volumeTrace];
+                
+                layout.yaxis = {
+                    title: 'Price',
+                    domain: [0.3, 1]
+                };
+                
+                layout.yaxis2 = {
+                    title: 'Volume',
+                    domain: [0, 0.25]
+                };
+                
+                break;
+        }
+        
+        // Set up config for graphs
+const config = {
+    responsive: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+    toImageButtonOptions: {
+        format: 'png',
+        filename: `${ticker}_${graphType}`,
+        height: targetElement === fullscreenGraph ? 700 : 400,
+        width: targetElement === fullscreenGraph ? targetElement.offsetWidth : targetElement.offsetWidth,
+        scale: 2
+    }
+};
+        
+        // Plot the graph
+        currentPlot = Plotly.newPlot(targetElement, traces, layout, config);
+        
+        return currentPlot;
+    }
+    
+    // Helper function to calculate moving average
+    function calculateMovingAverage(data, period) {
+        const result = [];
+        
+        for (let i = period - 1; i < data.length; i++) {
+            let sum = 0;
+            for (let j = 0; j < period; j++) {
+                sum += data[i - j];
+            }
+            result.push(sum / period);
+        }
+        
+        return result;
+    }
+    
+    // Update graph legend based on graph type
+    function updateGraphLegend(graphType) {
+        if (!graphLegend) return;
+        
+        let legendContent = '';
+        
+        switch(graphType) {
+            case 'price':
+                legendContent = `
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span> Historical Close</div>
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-blue-400 mr-1"></span> Historical Open</div>
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-orange-500 mr-1"></span> Predicted Close</div>
+                    <div class="flex items-center"><span class="inline-block w-3 h-3 bg-orange-300 mr-1"></span> Predicted Open</div>
+                `;
+                break;
+                
+            case 'movingAvg':
+                legendContent = `
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-gray-500 mr-1"></span> Close Price</div>
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span> 10-Day MA</div>
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-green-600 mr-1"></span> 20-Day MA</div>
+                    <div class="flex items-center"><span class="inline-block w-3 h-3 bg-yellow-600 mr-1"></span> 50-Day MA</div>
+                `;
+                break;
+                
+            case 'candlestick':
+                legendContent = `
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-green-500 mr-1"></span> Bullish Candle</div>
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-red-500 mr-1"></span> Bearish Candle</div>
+                    <div class="flex items-center"><span class="inline-block w-3 h-3 bg-orange-500 mr-1"></span> Predicted</div>
+                `;
+                break;
+                
+            case 'volume':
+                legendContent = `
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span> Close Price</div>
+                    <div class="flex items-center mr-4"><span class="inline-block w-3 h-3 bg-green-500 mr-1"></span> Up Volume</div>
+                    <div class="flex items-center"><span class="inline-block w-3 h-3 bg-red-500 mr-1"></span> Down Volume</div>
+                `;
+                break;
+        }
+        
+        graphLegend.innerHTML = legendContent;
+    }
+    
+    // Auto-initialize first graph if data is available
+    if (document.querySelector('.graph-option') && document.getElementById('ticker').value) {
+        setTimeout(() => {
+            document.querySelector('.graph-option').click();
+        }, 500);
+    }
+});
+</script>
+</body>
+</html>

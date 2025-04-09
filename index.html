@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockSense - AI-Powered Stock Predictions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* Custom Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .animate-fadeInUp {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s infinite;
+        }
+        
+        /* Background Images */
+        .hero-section {
+            background-image: url('https://tse4.mm.bing.net/th?id=OIG1.SWMfLGAhSmcO0713qDVr&pid=ImgGn');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(rgba(0, 0, 50, 0.7), rgba(0, 0, 50, 0.4));
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .market-section {
+            background-image: url('https://wallpaperaccess.com/full/9807578.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .market-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1;
+        }
+        
+        .market-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .cta-section {
+            background-image: url('https://wallpaperaccess.com/full/1393743.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.95), rgba(79, 70, 229, 0.95));
+            z-index: 1;
+        }
+        
+        .cta-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Feature Card Hover Effects */
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2);
+            color: #2563eb;
+        }
+        
+        /* Market Item Hover Effects */
+        .market-item {
+            transition: all 0.3s ease;
+        }
+        
+        .market-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background-color: #2563eb;
+            color: white;
+        }
+        
+        .market-item:hover i {
+            color: white;
+        }
+        
+        /* Button Hover Effects */
+        .btn-primary {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .btn-primary:hover::after {
+            animation: ripple 1s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+        
+        /* Login/Register Page Background */
+        .auth-background {
+            background-image: url('https://images2.alphacoders.com/139/thumb-1920-1393528.png');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .auth-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(rgba(0, 0, 50, 0.6), rgba(0, 0, 50, 0.3));
+            z-index: 1;
+        }
+        
+        .auth-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Price Card Hover Effects */
+        .price-card {
+            transition: all 0.3s ease;
+        }
+        
+        .price-card:hover {
+            transform: translateY(-10px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50 animate-fadeInUp">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="{{ url_for('home') }}" class="text-2xl font-bold text-blue-600 hover:text-blue-800 transition">StockSense</a>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="#features" class="text-gray-700 hover:text-blue-600 px-3 py-2 border-b-2 border-transparent hover:border-blue-600 transition">Features</a>
+                        <a href="#markets" class="text-gray-700 hover:text-blue-600 px-3 py-2 border-b-2 border-transparent hover:border-blue-600 transition">Markets</a>
+                        <a href="#pricing" class="text-gray-700 hover:text-blue-600 px-3 py-2 border-b-2 border-transparent hover:border-blue-600 transition">Pricing</a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <a href="{{ url_for('dashboard') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition btn-primary">
+                        Launch App
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Background Image -->
+    <div class="hero-section py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="hero-content text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 animate-fadeInUp">
+                    AI-Powered Stock Market Predictions
+                </h1>
+                <p class="text-xl text-gray-200 mb-8 max-w-3xl mx-auto animate-fadeInUp" style="animation-delay: 0.3s;">
+                    Harness the power of artificial intelligence to predict stock prices with unprecedented accuracy across global markets.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4 animate-fadeInUp" style="animation-delay: 0.6s;">
+                    <a href="{{ url_for('login') }}" class="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg hover:bg-blue-700 transition btn-primary animate-pulse-slow">
+                        Get Started - It's Free
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4 animate-fadeInUp">Why Choose StockSense?</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto animate-fadeInUp" style="animation-delay: 0.2s;">Advanced features for modern investors</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="p-6 bg-blue-50 rounded-lg shadow-md hover:shadow-lg transition feature-card animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <div class="flex justify-center mb-4">
+                        <i class="fas fa-robot text-4xl text-blue-600 feature-icon"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-center mb-3">AI-Powered Analysis</h3>
+                    <p class="text-gray-600 text-center">
+                        Our machine learning algorithms analyze millions of data points to deliver accurate stock predictions.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="p-6 bg-blue-50 rounded-lg shadow-md hover:shadow-lg transition feature-card animate-fadeInUp" style="animation-delay: 0.5s;">
+                    <div class="flex justify-center mb-4">
+                        <i class="fas fa-chart-line text-4xl text-blue-600 feature-icon"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-center mb-3">Real-Time Alerts</h3>
+                    <p class="text-gray-600 text-center">
+                        Get instant notifications about market changes and potential investment opportunities.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="p-6 bg-blue-50 rounded-lg shadow-md hover:shadow-lg transition feature-card animate-fadeInUp" style="animation-delay: 0.7s;">
+                    <div class="flex justify-center mb-4">
+                        <i class="fas fa-globe text-4xl text-blue-600 feature-icon"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-center mb-3">Global Markets</h3>
+                    <p class="text-gray-600 text-center">
+                        Access predictive data for stocks, ETFs, and commodities across all major global markets.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="py-16 bg-gradient-to-br from-blue-100 to-indigo-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4 animate-fadeInUp">How StockSense Works</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto animate-fadeInUp" style="animation-delay: 0.2s;">Our three-step approach to smarter investing</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="flex flex-col items-center animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4 hover:bg-blue-700 transition transform hover:scale-110">1</div>
+                    <h3 class="text-xl font-semibold mb-2">Data Collection</h3>
+                    <p class="text-gray-600 text-center">
+                        We gather historical data, news, social sentiment, and economic indicators in real-time.
+                    </p>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="flex flex-col items-center animate-fadeInUp" style="animation-delay: 0.5s;">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4 hover:bg-blue-700 transition transform hover:scale-110">2</div>
+                    <h3 class="text-xl font-semibold mb-2">AI Analysis</h3>
+                    <p class="text-gray-600 text-center">
+                        Our proprietary algorithms process the data to identify patterns and predict market movements.
+                    </p>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="flex flex-col items-center animate-fadeInUp" style="animation-delay: 0.7s;">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4 hover:bg-blue-700 transition transform hover:scale-110">3</div>
+                    <h3 class="text-xl font-semibold mb-2">Actionable Insights</h3>
+                    <p class="text-gray-600 text-center">
+                        Receive clear recommendations and insights tailored to your investment strategy.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markets Section with Background Image -->
+    <div id="markets" class="market-section py-16">
+        <div class="market-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4 animate-fadeInUp">Markets We Cover</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto animate-fadeInUp" style="animation-delay: 0.2s;">Comprehensive coverage across global financial markets</p>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <i class="fas fa-landmark text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">US Stocks</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <i class="fas fa-euro-sign text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">European Markets</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.5s;">
+                    <i class="fas fa-yen-sign text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">Asian Markets</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.6s;">
+                    <i class="fas fa-coins text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">Cryptocurrencies</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.7s;">
+                    <i class="fas fa-chart-pie text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">ETFs</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.8s;">
+                    <i class="fas fa-oil-can text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">Commodities</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 0.9s;">
+                    <i class="fas fa-money-bill-wave text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">Forex</h4>
+                </div>
+                <div class="p-4 bg-white bg-opacity-90 rounded-lg shadow-sm market-item animate-fadeInUp" style="animation-delay: 1s;">
+                    <i class="fas fa-file-contract text-3xl text-blue-600 mb-3"></i>
+                    <h4 class="font-semibold">Options</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <div id="pricing" class="py-16 bg-gradient-to-br from-blue-100 to-indigo-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4 animate-fadeInUp">Simple, Transparent Pricing</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto animate-fadeInUp" style="animation-delay: 0.2s;">Choose the plan that's right for your investment needs</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Free Plan -->
+                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition price-card animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Free</h3>
+                    <p class="text-gray-600 text-center mb-6">Perfect for beginners</p>
+                    <div class="text-center mb-6">
+                        <span class="text-4xl font-bold">$0</span>
+                        <span class="text-gray-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>5 daily predictions</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Basic market analysis</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Email alerts</span>
+                        </li>
+                    </ul>
+                    <div class="text-center">
+                        <a href="{{ url_for('login') }}" class="inline-block w-full py-3 px-6 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition transform hover:scale-105">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Pro Plan -->
+                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition price-card transform scale-105 border-2 border-blue-500 animate-fadeInUp" style="animation-delay: 0.5s;">
+                    <div class="absolute -top-4 left-0 right-0 flex justify-center">
+                        <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm animate-pulse-slow">Most Popular</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-center">Pro</h3>
+                    <p class="text-gray-600 text-center mb-6">For serious investors</p>
+                    <div class="text-center mb-6">
+                        <span class="text-4xl font-bold">$49</span>
+                        <span class="text-gray-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Unlimited predictions</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Advanced technical analysis</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Real-time alerts</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Portfolio tracking</span>
+                        </li>
+                    </ul>
+                    <div class="text-center">
+                        <a href="{{ url_for('login') }}" class="inline-block w-full py-3 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition btn-primary">
+                            Start Free Trial
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Enterprise Plan -->
+                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition price-card animate-fadeInUp" style="animation-delay: 0.7s;">
+                    <h3 class="text-2xl font-bold mb-4 text-center">Enterprise</h3>
+                    <p class="text-gray-600 text-center mb-6">For professional traders</p>
+                    <div class="text-center mb-6">
+                        <span class="text-4xl font-bold">$199</span>
+                        <span class="text-gray-600">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Everything in Pro</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Custom API access</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Dedicated account manager</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            <span>Institutional-grade insights</span>
+                        </li>
+                    </ul>
+                    <div class="text-center">
+                        <a href="{{ url_for('login') }}" class="inline-block w-full py-3 px-6 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition transform hover:scale-105">
+                            Contact Sales
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testimonials Section -->
+    <div class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4 animate-fadeInUp">What Our Users Say</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto animate-fadeInUp" style="animation-delay: 0.2s;">Join thousands of satisfied investors worldwide</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Testimonial 1 -->
+                <div class="bg-gray-50 p-8 rounded-lg shadow-sm hover:shadow-xl transition transform hover:scale-105 animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "StockSense has completely transformed my investment strategy. The AI predictions are remarkably accurate, and I've seen a 22% increase in my portfolio since I started using it."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold mr-4 hover:bg-blue-200 transition">MJ</div>
+                        <div>
+                            <h4 class="font-semibold">Michael J.</h4>
+                            <p class="text-gray-500 text-sm">Retail Investor</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 2 -->
+                <div class="bg-gray-50 p-8 rounded-lg shadow-sm hover:shadow-xl transition transform hover:scale-105 animate-fadeInUp" style="animation-delay: 0.5s;">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "As a financial advisor, I rely on StockSense daily to supplement my research. The platform's ability to process vast amounts of data gives my clients an edge in the market."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold mr-4 hover:bg-blue-200 transition">SC</div>
+                        <div>
+                            <h4 class="font-semibold">Sarah C.</h4>
+                            <p class="text-gray-500 text-sm">Financial Advisor</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="bg-gray-50 p-8 rounded-lg shadow-sm hover:shadow-xl transition transform hover:scale-105 animate-fadeInUp" style="animation-delay: 0.7s;">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        "The real-time alerts have saved me from several potentially bad trades. The interface is intuitive, and the predictions are presented in an easily digestible format."
+                    </p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold mr-4 hover:bg-blue-200 transition">RL</div>
+                        <div>
+                            <h4 class="font-semibold">Robert L.</h4>
+                            <p class="text-gray-500 text-sm">Day Trader</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action with Background Image -->
+    <div class="cta-section py-16">
+        <div class="cta-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold mb-6 text-white">Ready to Transform Your Investment Strategy?</h2>
+                <p class="text-xl mb-8 max-w-2xl mx-auto text-white">
+                    Join thousands of investors who are already leveraging AI to make smarter investment decisions.
+                </p>
+                <div class="flex justify-center">
+                    <a href="{{ url_for('login') }}" class="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition">
+                        Start Your Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+        <!-- Team Section -->
+        <section id="team" class="py-16 bg-gradient-to-br from-blue-100 to-indigo-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16 animate-fadeInUp">
+                    <span class="text-blue-600 font-semibold uppercase tracking-wide">Our Team</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">Meet the Experts</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">Our team combines financial expertise with cutting-edge AI technology to deliver accurate stock predictions.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <!-- Anjali - Team Lead -->
+                    <div class="team-card bg-white rounded-xl shadow-lg overflow-hidden text-center hover:shadow-xl transition-transform duration-300 hover:-translate-y-2 transform hover:scale-105 border-2 border-blue-500">
+                        <div class="w-full h-64 flex items-center justify-center bg-blue-50">
+                            <svg class="w-40 h-40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Leader with Trophy -->
+                                <circle cx="100" cy="70" r="40" fill="#3B82F6"/>
+                                <path d="M60 40 Q100 0 140 40 L130 60 Q100 40 70 60 Z" fill="#1D4ED8"/>
+                                <circle cx="85" cy="65" r="5" fill="white"/>
+                                <circle cx="115" cy="65" r="5" fill="white"/>
+                                <path d="M85 90 Q100 100 115 90" stroke="white" stroke-width="2" fill="none"/>
+                                <rect x="70" y="120" width="60" height="40" rx="5" fill="#1D4ED8"/>
+                                <path d="M90 160 L110 160 L110 180 L90 180 Z" fill="#1E40AF"/>
+                            </svg>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Anjali</h3>
+                            <p class="text-blue-600 mb-4 font-semibold">Team Lead</p>
+                            <div class="team-details">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Oversees project direction and ensures seamless integration of AI models.
+                                </p>
+                                <div class="flex justify-center space-x-4">
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Srinu -->
+                    <div class="team-card bg-white rounded-xl shadow-lg overflow-hidden text-center hover:shadow-xl transition-transform duration-300 hover:-translate-y-2">
+                        <div class="w-full h-64 flex items-center justify-center bg-indigo-50">
+                            <svg class="w-40 h-40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Data Scientist -->
+                                <circle cx="100" cy="70" r="40" fill="#6366F1"/>
+                                <circle cx="85" cy="65" r="5" fill="white"/>
+                                <circle cx="115" cy="65" r="5" fill="white"/>
+                                <path d="M85 90 Q100 100 115 90" stroke="white" stroke-width="2" fill="none"/>
+                                <rect x="70" y="120" width="60" height="50" rx="5" fill="#4F46E5"/>
+                                <!-- Chart elements -->
+                                <rect x="80" y="140" width="10" height="30" fill="#6366F1"/>
+                                <rect x="95" y="130" width="10" height="40" fill="#6366F1"/>
+                                <rect x="110" y="150" width="10" height="20" fill="#6366F1"/>
+                            </svg>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Srinu</h3>
+                            <p class="text-gray-600 mb-4">Data Scientist</p>
+                            <div class="team-details">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Specializes in financial data analysis and predictive modeling.
+                                </p>
+                                <div class="flex justify-center space-x-4">
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Naga Lakshmi -->
+                    <div class="team-card bg-white rounded-xl shadow-lg overflow-hidden text-center hover:shadow-xl transition-transform duration-300 hover:-translate-y-2">
+                        <div class="w-full h-64 flex items-center justify-center bg-purple-50">
+                            <svg class="w-40 h-40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                <!-- AI Researcher -->
+                                <path d="M100 40 Q140 20 160 50 Q180 80 160 110 Q140 140 100 140 Q60 140 40 110 Q20 80 40 50 Q60 20 100 40" fill="#8B5CF6"/>
+                                <ellipse cx="85" cy="80" rx="8" ry="10" fill="white"/>
+                                <ellipse cx="115" cy="80" rx="8" ry="10" fill="white"/>
+                                <path d="M85 110 Q100 120 115 110" stroke="white" stroke-width="2" fill="none"/>
+                                <rect x="70" y="140" width="60" height="40" rx="5" fill="#7C3AED"/>
+                                <!-- Binary code -->
+                                <rect x="80" y="150" width="10" height="5" fill="white"/>
+                                <rect x="95" y="150" width="10" height="5" fill="white"/>
+                                <rect x="110" y="150" width="10" height="5" fill="white"/>
+                                <rect x="80" y="160" width="5" height="5" fill="white"/>
+                                <rect x="90" y="160" width="5" height="5" fill="white"/>
+                                <rect x="105" y="160" width="10" height="5" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Naga Lakshmi</h3>
+                            <p class="text-gray-600 mb-4">AI Researcher</p>
+                            <div class="team-details">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Develops advanced algorithms for market trend analysis.
+                                </p>
+                                <div class="flex justify-center space-x-4">
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sameera -->
+                    <div class="team-card bg-white rounded-xl shadow-lg overflow-hidden text-center hover:shadow-xl transition-transform duration-300 hover:-translate-y-2">
+                        <div class="w-full h-64 flex items-center justify-center bg-teal-50">
+                            <svg class="w-40 h-40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Frontend Developer -->
+                                <circle cx="100" cy="70" r="40" fill="#14B8A6"/>
+                                <circle cx="85" cy="65" r="5" fill="white"/>
+                                <circle cx="115" cy="65" r="5" fill="white"/>
+                                <path d="M85 90 Q100 100 115 90" stroke="white" stroke-width="2" fill="none"/>
+                                <rect x="60" y="120" width="80" height="50" rx="5" fill="#0D9488"/>
+                                <!-- Code brackets -->
+                                <path d="M75 140 L85 140 L80 150 L90 150" stroke="white" stroke-width="3" fill="none"/>
+                                <path d="M110 140 L120 140 L115 150 L125 150" stroke="white" stroke-width="3" fill="none"/>
+                                <rect x="90" y="145" width="20" height="5" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Sameera</h3>
+                            <p class="text-gray-600 mb-4">Frontend Developer</p>
+                            <div class="team-details">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Creates intuitive interfaces for visualizing complex financial data.
+                                </p>
+                                <div class="flex justify-center space-x-4">
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ravi Sai -->
+                    <div class="team-card bg-white rounded-xl shadow-lg overflow-hidden text-center hover:shadow-xl transition-transform duration-300 hover:-translate-y-2">
+                        <div class="w-full h-64 flex items-center justify-center bg-amber-50">
+                            <svg class="w-40 h-40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Backend Engineer -->
+                                <circle cx="100" cy="70" r="40" fill="#F59E0B"/>
+                                <circle cx="85" cy="65" r="5" fill="white"/>
+                                <circle cx="115" cy="65" r="5" fill="white"/>
+                                <path d="M85 90 Q100 100 115 90" stroke="white" stroke-width="2" fill="none"/>
+                                <rect x="70" y="120" width="60" height="50" rx="5" fill="#D97706"/>
+                                <!-- Server rack -->
+                                <rect x="80" y="130" width="40" height="30" fill="#F59E0B"/>
+                                <rect x="85" y="135" width="30" height="5" fill="#D97706"/>
+                                <rect x="85" y="145" width="30" height="5" fill="#D97706"/>
+                                <rect x="85" y="155" width="30" height="5" fill="#D97706"/>
+                            </svg>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Ravi Sai</h3>
+                            <p class="text-gray-600 mb-4">Backend Engineer</p>
+                            <div class="team-details">
+                                <p class="text-sm text-gray-600 mb-4">
+                                    Builds robust APIs and data pipelines for real-time market data.
+                                </p>
+                                <div class="flex justify-center space-x-4">
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">StockSense</h3>
+                    <p class="text-gray-400">
+                        Revolutionizing investment decisions with AI-powered stock predictions and market analysis.
+                    </p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Features</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Pricing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">API</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Integration</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Resources</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Blog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Tutorials</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Webinars</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">About</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Legal</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 StockSense. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
